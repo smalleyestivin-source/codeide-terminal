@@ -1,0 +1,10 @@
+:root{--bg:#0f1115;--bar:#161b22;--fg:#d7dae0;--btn:#222a33;--on:#2f6feb}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif}
+#app{display:flex;flex-direction:column;height:100%;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#tabs,#keys{display:flex;gap:4px;overflow-x:auto;background:var(--bar);padding:4px}
+.tab,#keys button{flex:none;border:0;border-radius:6px;padding:7px 10px;background:var(--btn);color:var(--fg)}
+.tab.on,#keys button.on{background:var(--on);color:#fff}
+.tab.add{background:transparent;font-size:18px}
+#keys button{min-width:40px;font:13px ui-monospace,monospace}
+#host{flex:1;min-height:0;position:relative}
+.pane{position:absolute;inset:0;padding:4px;display:none}
