@@ -19,6 +19,7 @@ ${rd('terminal.css')}</style>
 <body><div id="app"><div id="tabs"></div><div id="host"></div><div id="keys"></div></div>
 <script>${cfg}</script>
 <script>${rd('terminal.js')}</script>
+<script>${rd('native.js')}</script>
 <script>${rd('keyboard.js')}</script>
 <script>${rd('tabs.js')}</script>
 </body></html>`;

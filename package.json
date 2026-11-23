@@ -11,5 +11,8 @@
   },
   "devDependencies": {
     "@capacitor/cli": "6.2.0"
+  },
+  "scripts": {
+    "capacitor:sync:after": "node scripts/patch-android.js"
   }
 }
