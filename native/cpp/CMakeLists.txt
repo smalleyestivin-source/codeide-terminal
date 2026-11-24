@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10.2)
 project(codeide_pty C)
-add_library(codeide_pty SHARED pty_engine.c jni_bridge.c)
+add_library(codeide_pty SHARED pty_engine.c tar_extract.c jni_bridge.c)
 # Páginas de 16 KB (requisito de Google Play para código nativo)
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,max-page-size=16384")
-target_link_libraries(codeide_pty log)
+target_link_libraries(codeide_pty log z)

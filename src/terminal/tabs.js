@@ -15,12 +15,12 @@
   function render() {
     tabsEl.innerHTML = '';
     tabs.forEach(t => {
-      const b = document.createElement('button'); b.className = 'tab' + (t === active ? ' on' : ''); b.textContent = (t.kind === 'shell' ? 'Shell ' : 'Terminal ') + t.id;
+      const b = document.createElement('button'); b.className = 'tab' + (t === active ? ' on' : ''); b.textContent = (t.kind === 'linux' ? 'Linux ' : t.kind === 'shell' ? 'Shell ' : 'Terminal ') + t.id;
       const x = document.createElement('span'); x.textContent = ' ×'; x.onclick = e => { e.stopPropagation(); closeTab(t); };
       b.appendChild(x); b.onclick = () => activate(t); tabsEl.appendChild(b);
     });
     const p = document.createElement('button'); p.className = 'tab add'; p.textContent = '+'; p.onclick = () => addTab(); tabsEl.appendChild(p);
-    if (T.shellAvailable && T.shellAvailable()) { const q = document.createElement('button'); q.className = 'tab add'; q.textContent = 'Shell'; q.style.fontSize = '13px'; q.onclick = () => addTab('shell'); tabsEl.appendChild(q); }
+    if (T.shellAvailable && T.shellAvailable()) { for (const k of ['shell', 'linux']) { const q = document.createElement('button'); q.className = 'tab add'; q.textContent = k === 'linux' ? 'Linux' : 'Shell'; q.style.fontSize = '13px'; q.onclick = () => addTab(k); tabsEl.appendChild(q); } }
   }
   function activate(t) {
     tabs.forEach(o => { o.pane.style.display = o === t ? 'block' : 'none'; }); active = t; render();
