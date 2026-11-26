@@ -36,13 +36,23 @@ public class TerminalPlugin extends Plugin {
     private File alpineDir() { return new File(linuxDir(), "alpine"); }
     private String nativeDir() { return getContext().getApplicationInfo().nativeLibraryDir; }
     private String rootfsAsset() { return android.os.Process.is64Bit() ? "linux/rootfs-aarch64.tar.gz" : "linux/rootfs-armv7.tar.gz"; }
+    private String readAsset(String p) {
+        try (InputStream in = getContext().getAssets().open(p)) {
+            java.io.ByteArrayOutputStream b = new java.io.ByteArrayOutputStream(); byte[] x = new byte[1024]; int n;
+            while ((n = in.read(x)) > 0 && b.size() < 2000) b.write(x, 0, n);
+            return b.toString("UTF-8");
+        } catch (IOException e) { return ""; }
+    }
     private boolean hasAsset(String p) { try (InputStream in = getContext().getAssets().open(p)) { return true; } catch (IOException e) { return false; } }
 
     @PluginMethod
     public void linuxStatus(PluginCall call) {
         JSObject o = new JSObject();
-        o.put("bundled", hasAsset(rootfsAsset()) && new File(nativeDir(), "libproot-xed.so").exists() && new File(nativeDir(), "libproot.so").exists());
+        boolean rootfs = hasAsset(rootfsAsset()), proot = new File(nativeDir(), "libproot-xed.so").exists(), loader = new File(nativeDir(), "libproot.so").exists();
+        o.put("bundled", rootfs && proot && loader);
+        o.put("rootfs", rootfs); o.put("proot", proot); o.put("loader", loader);
         o.put("installed", new File(linuxDir(), ".installed").exists());
+        o.put("fetchError", readAsset("linux/FETCH_ERROR.txt"));
         call.resolve(o);
     }
 

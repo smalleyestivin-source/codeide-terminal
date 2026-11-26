@@ -15,7 +15,13 @@
     on(k, name) { return this.P.addListener(name, e => { if (this.id === null) this.early.push([k, e]); else this.dispatch(k, e); }); }
     async prepareLinux() {
       const st = await this.P.linuxStatus();
-      if (!st.bundled) throw new Error('Esta versión no incluye Linux (faltan PRoot y Alpine dentro del APK).');
+      if (!st.bundled) {
+        let m = 'Esta versión no incluye Linux (faltan PRoot y Alpine dentro del APK).';
+        const missing = ['rootfs', 'proot', 'loader'].filter(k => st[k] === false);
+        if (missing.length) m += '\nFaltan en el APK: ' + missing.join(', ') + '.';
+        if (st.fetchError) m += '\nMotivo al compilar: ' + st.fetchError;
+        throw new Error(m.replace(/\n/g, '\r\n'));
+      }
       if (!st.installed) { this.say('Preparando Linux (solo la primera vez, puede tardar)…', '33'); await this.P.linuxInstall(); this.say('Linux listo.', '32'); }
     }
     async start(cols, rows) {

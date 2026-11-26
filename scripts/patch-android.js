@@ -4,6 +4,7 @@ const root = path.join(__dirname, '..'), app = path.join(root, 'android', 'app')
 if (!fs.existsSync(app)) { console.log('patch-android: aún no hay proyecto android, nada que hacer'); process.exit(0); }
 const copy = (a, b) => { fs.mkdirSync(path.dirname(b), { recursive: true }); fs.copyFileSync(a, b); };
 const copyDir = (a, b) => { for (const e of fs.readdirSync(a, { withFileTypes: true })) { const s = path.join(a, e.name), d = path.join(b, e.name); if (e.isDirectory()) copyDir(s, d); else copy(s, d); } };
+const copyText = (p, t) => { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, t); };
 const main = path.join(app, 'src', 'main'), jdir = path.join(main, 'java', 'com', 'codeide', 'terminal');
 for (const f of ['pty_engine.c', 'pty_engine.h', 'tar_extract.c', 'tar_extract.h', 'jni_bridge.c', 'CMakeLists.txt']) copy(path.join(root, 'native', 'cpp', f), path.join(main, 'cpp', f));
 for (const f of ['NativePty.java', 'TerminalPlugin.java']) copy(path.join(root, 'native', 'java', f), path.join(jdir, f));
@@ -12,7 +13,11 @@ for (const f of ['NativePty.java', 'TerminalPlugin.java']) copy(path.join(root, 
 const lin = path.join(root, 'build', 'linux');
 if (!fs.existsSync(lin) && !process.env.SKIP_LINUX) {
   try { cp.execFileSync(process.execPath, [path.join(__dirname, 'fetch-linux.js')], { stdio: 'inherit' }); }
-  catch (e) { console.warn('patch-android: AVISO — no se pudo preparar Linux; la app se compila SIN Linux (la pestaña lo avisará).'); }
+  catch (e) {
+    console.warn('patch-android: AVISO — no se pudo preparar Linux; la app se compila SIN Linux (la pestaña lo avisará).');
+    const ef = path.join(root, 'build', 'linux-error.txt');   // el motivo viaja dentro del APK para mostrarlo en la app
+    copyText(path.join(main, 'assets', 'linux', 'FETCH_ERROR.txt'), fs.existsSync(ef) ? fs.readFileSync(ef, 'utf8') : String(e.message).slice(0, 800));
+  }
 }
 if (fs.existsSync(lin)) {
   copyDir(path.join(lin, 'jniLibs'), path.join(main, 'jniLibs')); copyDir(path.join(lin, 'assets'), path.join(main, 'assets'));

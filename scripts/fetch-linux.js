@@ -1,13 +1,15 @@
 // Descarga, SOLO durante la compilación, PRoot y sus bibliotecas (paquetes oficiales de Termux) y el rootfs de Alpine.
 // Todo queda en build/linux/ y se empaqueta dentro del APK: la app nunca descarga código ejecutable al usarse.
 const fs = require('fs'), path = require('path'), os = require('os'), zlib = require('zlib'), crypto = require('crypto'), cp = require('child_process');
-const TERMUX = process.env.TERMUX_REPO || 'https://packages.termux.dev/apt/termux-main';
-const ALPINE = process.env.ALPINE_MIRROR || 'https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases';
+// Varias rutas por si una falla desde los servidores de GitHub (se prueban en orden).
+const TERMUX_BASES = process.env.TERMUX_REPO ? [process.env.TERMUX_REPO] : ['https://packages-cf.termux.dev/apt/termux-main', 'https://packages.termux.dev/apt/termux-main'];
+const ALPINE_BASES = process.env.ALPINE_MIRROR ? [process.env.ALPINE_MIRROR] : ['https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases', 'https://mirrors.edge.kernel.org/alpine/latest-stable/releases'];
 const ARCHS = [
   { abi: 'arm64-v8a', termux: 'aarch64', alpine: ['aarch64'], name: 'aarch64' },
   { abi: 'armeabi-v7a', termux: 'arm', alpine: ['armv7', 'armhf'], name: 'armv7' }
 ];
 const httpGet = async url => { const r = await fetch(url); if (!r.ok) throw new Error(url + ': HTTP ' + r.status); return Buffer.from(await r.arrayBuffer()); };
+async function getAny(get, bases, rel) { const errs = []; for (const b of bases) { try { return await get(`${b}/${rel}`); } catch (e) { errs.push(e.message); } } throw new Error(errs.join(' | ')); }
 const sha256 = b => crypto.createHash('sha256').update(b).digest('hex');
 
 function parsePackages(text) {
@@ -27,15 +29,16 @@ function resolveBase(dir, name) { for (let i = 0; i < 6; i++) { const p = path.j
 
 async function fetchDeb(get, pk, name, tmp) {
   const e = pk[name]; if (!e) return null;
-  const buf = await get(`${TERMUX}/${e.Filename}`);
+  const buf = await getAny(get, TERMUX_BASES, e.Filename);
   if (sha256(buf) !== e.SHA256) throw new Error('checksum incorrecto en el paquete de Termux: ' + name);
   const dir = path.join(tmp, name); fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'p.deb'), buf); cp.execFileSync('dpkg-deb', ['-x', path.join(dir, 'p.deb'), path.join(dir, 'x')]);
   return { dir: path.join(dir, 'x'), version: e.Version, depends: parseDepends(e.Depends) };
 }
 async function packagesFor(get, arch) {
-  const base = `${TERMUX}/dists/stable/main/binary-${arch}/Packages`;
-  try { return parsePackages((await get(base)).toString()); } catch (e) { return parsePackages(zlib.gunzipSync(await get(base + '.gz')).toString()); }
+  const rel = `dists/stable/main/binary-${arch}/Packages`;
+  try { return parsePackages((await getAny(get, TERMUX_BASES, rel)).toString()); }
+  catch (e1) { try { return parsePackages(zlib.gunzipSync(await getAny(get, TERMUX_BASES, rel + '.gz')).toString()); } catch (e2) { throw new Error('no se pudo leer el índice de Termux: ' + e1.message); } }
 }
 
 async function run(opts = {}) {
@@ -68,11 +71,11 @@ async function run(opts = {}) {
     }
     let file = null, arch = null;
     for (const cand of A.alpine) {
-      try { file = parseAlpineYaml((await get(`${ALPINE}/${cand}/latest-releases.yaml`)).toString(), cand); } catch (e) { log(`aviso: Alpine ${cand}: ${e.message}`); }
+      try { file = parseAlpineYaml((await getAny(get, ALPINE_BASES, `${cand}/latest-releases.yaml`)).toString(), cand); } catch (e) { log(`aviso: Alpine ${cand}: ${e.message}`); }
       if (file) { arch = cand; break; }
     }
     if (!file) throw new Error('no se encontró el rootfs de Alpine para ' + A.name);
-    const tgz = await get(`${ALPINE}/${arch}/${file}`), want = (await get(`${ALPINE}/${arch}/${file}.sha256`)).toString().trim().split(/\s+/)[0];
+    const tgz = await getAny(get, ALPINE_BASES, `${arch}/${file}`), want = (await getAny(get, ALPINE_BASES, `${arch}/${file}.sha256`)).toString().trim().split(/\s+/)[0];
     if (sha256(tgz) !== want) throw new Error('checksum incorrecto en ' + file);
     fs.writeFileSync(path.join(assets, `rootfs-${A.name}.tar.gz`), tgz); versions.push(`${A.abi}: ${file} (Alpine)`);
   }
@@ -82,4 +85,8 @@ async function run(opts = {}) {
   return { out, versions };
 }
 module.exports = { run, parsePackages, parseDepends, parseAlpineYaml };
-if (require.main === module) run().then(r => console.log('fetch-linux listo:\n' + r.versions.join('\n'))).catch(e => { console.error('fetch-linux FALLÓ: ' + e.message); process.exit(1); });
+if (require.main === module) run().then(r => console.log('fetch-linux listo:\n' + r.versions.join('\n'))).catch(e => {
+  console.error('fetch-linux FALLÓ: ' + e.message);
+  try { fs.mkdirSync(path.join(__dirname, '..', 'build'), { recursive: true }); fs.writeFileSync(path.join(__dirname, '..', 'build', 'linux-error.txt'), String(e.message).slice(0, 800)); } catch (x) { /* sin archivo de error */ }
+  process.exit(1);
+});
