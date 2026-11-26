@@ -35,7 +35,7 @@ public class TerminalPlugin extends Plugin {
     private File linuxDir() { return new File(getContext().getFilesDir(), "linux"); }
     private File alpineDir() { return new File(linuxDir(), "alpine"); }
     private String nativeDir() { return getContext().getApplicationInfo().nativeLibraryDir; }
-    private String rootfsAsset() { return android.os.Process.is64Bit() ? "linux/rootfs-aarch64.tar.gz" : "linux/rootfs-armv7.tar.gz"; }
+    private String rootfsAsset() { return android.os.Process.is64Bit() ? "linux/rootfs-aarch64.rootfs" : "linux/rootfs-armv7.rootfs"; }   // sin .gz: las herramientas de Android lo quitan
     private String readAsset(String p) {
         try (InputStream in = getContext().getAssets().open(p)) {
             java.io.ByteArrayOutputStream b = new java.io.ByteArrayOutputStream(); byte[] x = new byte[1024]; int n;

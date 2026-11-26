@@ -77,7 +77,7 @@ async function run(opts = {}) {
     if (!file) throw new Error('no se encontró el rootfs de Alpine para ' + A.name);
     const tgz = await getAny(get, ALPINE_BASES, `${arch}/${file}`), want = (await getAny(get, ALPINE_BASES, `${arch}/${file}.sha256`)).toString().trim().split(/\s+/)[0];
     if (sha256(tgz) !== want) throw new Error('checksum incorrecto en ' + file);
-    fs.writeFileSync(path.join(assets, `rootfs-${A.name}.tar.gz`), tgz); versions.push(`${A.abi}: ${file} (Alpine)`);
+    fs.writeFileSync(path.join(assets, `rootfs-${A.name}.rootfs`), tgz); versions.push(`${A.abi}: ${file} (Alpine)`);   /* sin extensión .gz: Android la quitaría al empaquetar */
   }
   fs.writeFileSync(path.join(assets, 'libmap.txt'), [...libmap].sort().join('\n') + '\n');
   fs.writeFileSync(path.join(assets, 'VERSIONS.txt'), versions.join('\n') + '\n');

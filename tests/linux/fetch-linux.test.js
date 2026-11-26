@@ -26,7 +26,7 @@ const mkget = m => async u => { if (!(u in m)) throw new Error(u + ': HTTP 404')
   console.log('  ok  proot y loader quedan con los nombres lib*.so que Android exige');
   assert.strictEqual(rd('jniLibs/arm64-v8a/libtalloc.so'), 'TALLOC'); const map = rd('assets/linux/libmap.txt').trim().split('\n');
   assert.ok(map.includes('libtalloc.so.2=libtalloc.so') && map.includes('libtalloc.so.2.4.3=libtalloc.so')); console.log('  ok  libtalloc y la tabla de nombres (libtalloc.so.2 -> libtalloc.so)');
-  assert.strictEqual(rd('assets/linux/rootfs-aarch64.tar.gz'), 'FAKE-ALPINE-TARBALL'); assert.ok(fs.existsSync(path.join(out, 'assets/linux/rootfs-armv7.tar.gz'))); console.log('  ok  rootfs de Alpine verificado; armv7 cae a armhf si falta');
+  assert.strictEqual(rd('assets/linux/rootfs-aarch64.rootfs'), 'FAKE-ALPINE-TARBALL'); assert.ok(fs.existsSync(path.join(out, 'assets/linux/rootfs-armv7.rootfs'))); assert.ok(!fs.readdirSync(path.join(out, 'assets/linux')).some(n => /\.gz$/.test(n))); console.log('  ok  rootfs de Alpine verificado, sin extensión .gz; armv7 cae a armhf si falta');
   assert.ok(logs.some(l => /libc\+\+/.test(l))); console.log('  ok  dependencia ausente en Termux: aviso y se omite');
   assert.match(rd('assets/linux/VERSIONS.txt'), /proot 5\.1 \(Termux\)/); console.log('  ok  VERSIONS.txt registra lo empaquetado');
   await assert.rejects(F.run({ get: mkget(files(true)), out, log() {} }), /checksum incorrecto/); console.log('  ok  checksum de Alpine incorrecto: la compilación falla');
