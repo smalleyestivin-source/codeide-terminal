@@ -17,6 +17,7 @@ if (!fs.existsSync(lin) && !process.env.SKIP_LINUX) {
     console.warn('patch-android: AVISO — no se pudo preparar Linux; la app se compila SIN Linux (la pestaña lo avisará).');
     const ef = path.join(root, 'build', 'linux-error.txt');   // el motivo viaja dentro del APK para mostrarlo en la app
     copyText(path.join(main, 'assets', 'linux', 'FETCH_ERROR.txt'), fs.existsSync(ef) ? fs.readFileSync(ef, 'utf8') : String(e.message).slice(0, 800));
+    fs.rmSync(lin, { recursive: true, force: true });          // nada a medias: o se incluye todo Linux o nada
   }
 }
 if (fs.existsSync(lin)) {

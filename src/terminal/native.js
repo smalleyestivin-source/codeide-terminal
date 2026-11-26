@@ -20,6 +20,8 @@
         const missing = ['rootfs', 'proot', 'loader'].filter(k => st[k] === false);
         if (missing.length) m += '\nFaltan en el APK: ' + missing.join(', ') + '.';
         if (st.fetchError) m += '\nMotivo al compilar: ' + st.fetchError;
+        if (st.rootfsName) m += '\nEsperaba: ' + st.rootfsName + '. En linux/ hay: ' + st.assetsLinux + '.';
+        if (st.nativeFiles) m += '\nLibrerías nativas: ' + st.nativeFiles + '.';
         throw new Error(m.replace(/\n/g, '\r\n'));
       }
       if (!st.installed) { this.say('Preparando Linux (solo la primera vez, puede tardar)…', '33'); await this.P.linuxInstall(); this.say('Linux listo.', '32'); }

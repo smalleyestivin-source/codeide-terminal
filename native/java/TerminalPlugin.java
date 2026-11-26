@@ -43,6 +43,12 @@ public class TerminalPlugin extends Plugin {
             return b.toString("UTF-8");
         } catch (IOException e) { return ""; }
     }
+    private static String joinNames(String[] a, boolean onlyNative) {
+        if (a == null) return "(no se pudo leer)";
+        StringBuilder b = new StringBuilder();
+        for (String n : a) { if (onlyNative && !(n.contains("proot") || n.contains("talloc") || n.contains("codeide"))) continue; if (b.length() > 0) b.append(", "); b.append(n); }
+        return b.length() == 0 ? "(ninguna)" : b.toString();
+    }
     private boolean hasAsset(String p) { try (InputStream in = getContext().getAssets().open(p)) { return true; } catch (IOException e) { return false; } }
 
     @PluginMethod
@@ -53,6 +59,11 @@ public class TerminalPlugin extends Plugin {
         o.put("rootfs", rootfs); o.put("proot", proot); o.put("loader", loader);
         o.put("installed", new File(linuxDir(), ".installed").exists());
         o.put("fetchError", readAsset("linux/FETCH_ERROR.txt"));
+        o.put("rootfsName", rootfsAsset());
+        String[] al = null;
+        try { al = getContext().getAssets().list("linux"); } catch (IOException e) { /* se informa abajo */ }
+        o.put("assetsLinux", al == null ? "(no se pudo leer)" : al.length == 0 ? "(vacía o no existe)" : joinNames(al, false));
+        o.put("nativeFiles", joinNames(new File(nativeDir()).list(), true));
         call.resolve(o);
     }
 
