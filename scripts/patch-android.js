@@ -43,4 +43,10 @@ if (!g.includes('codeide-native')) {
   g = g.replace(/defaultConfig\s*\{/, "defaultConfig {\n        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' } // codeide-native");
   fs.writeFileSync(bg, g);
 }
+// Identidad propia de las pruebas: evita el «conflicto con un paquete existente» con instalaciones anteriores firmadas con otra llave.
+if (!g.includes('codeide-appid')) {
+  if (!/applicationId\s+"[^"]*"/.test(g)) throw new Error('patch-android: no se encontró applicationId en build.gradle');
+  g = g.replace(/applicationId\s+"[^"]*"/, 'applicationId "com.codeide.terminal.dev" // codeide-appid');
+  fs.writeFileSync(bg, g);
+}
 console.log('patch-android: código nativo instalado y registrado');
